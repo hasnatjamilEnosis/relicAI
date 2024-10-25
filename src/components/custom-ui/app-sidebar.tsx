@@ -1,11 +1,5 @@
-import {
-  BrainCircuit,
-  Calendar,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-} from "lucide-react";
+"use client";
+import { BrainCircuit, Home, Settings } from "lucide-react";
 
 import {
   Sidebar,
@@ -37,11 +31,21 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const { open } = useSidebar();
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="pr-0 pl-3">
-        <Link href="/">
-          <BrainCircuit size={25} />
+        <Link href="/" className="flex gap-2 items-end">
+          <div className="z-50">
+            <BrainCircuit size={25} />
+          </div>
+          <span
+            className={`font-bold border-b-2 border-slate-400 tracking-widest text-xl text-justify transition ease-in-out ${
+              open ? "visible" : "invisible"
+            }`}
+          >
+            relicAI
+          </span>
         </Link>
       </SidebarHeader>
       <SidebarSeparator />

@@ -1,7 +1,13 @@
+import PageContent from "@/components/custom-ui/page-content";
+import PageHeader from "@/components/custom-ui/page-header";
+
 export default function Home() {
   return (
     <div>
-      <h1>Home</h1>
+      <PageHeader title="Home" />
+      <PageContent>
+        <p>Home page content</p>
+      </PageContent>
     </div>
   );
 }

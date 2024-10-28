@@ -1,5 +1,27 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Initial Setup
+- Clone the repository.
+- Open terminal and run the following command:
+  ```bash
+  npm install
+  # or
+  yarn install
+  ```
+- Create a file named `.env.local` at the project root.
+- Open the `.env.local` file and add the following environment variables:
+  ```bash
+  JIRA_BASE_URL=<Base URL of the JIRA board for search query>
+  JIRA_USERNAME=<Email id of the user>
+  JIRA_API_TOKEN=<JIRA API token>
+  ```
+- The JIRA_BASE_URL sample: `https://<your_domain>.atlassian.net/rest/api/3/search`
+- Steps to collect the JIRA API token:
+  - Go to your profile page in JIRA.
+  - Click the `Security` tab.
+  - Under the `API Tokens` section click the `Create and manage API tokens` link.
+  - Generate a new API token.
+
 ## Getting Started
 
 First, run the development server:

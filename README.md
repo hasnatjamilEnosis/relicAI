@@ -27,15 +27,15 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
 * Open `pgAdmin`, create a new server and create a new database named: `relic_ai`
 * Return to `VS Code`, create a new file named `.env` in the `root` directory.
 * Paste in the following environment variable according to the following format:
-  ```
+  ```bash
   DATABASE_URL="postgresql://<postgres server user>:<postgres server password>@localhost:5432/<database name>?schema=public"
   ```
   **Example**
-  ```
+  ```bash
   DATABASE_URL="postgresql://postgres:admin@localhost:5432/relic_core?schema=public"
   ```
 * Open terminal inside VS Code and run the following command:
-  ```
+  ```bash
   npx prisma migrate dev
   ```
 * Follow the steps under the `JIRA API Setup` section to set the environment variables in the `.env` file
@@ -57,7 +57,7 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
 ## Run Locally
 
 To start the application in `dev` mode, run the following command:
-```
+```bash
 npm run dev
 ```
 
@@ -65,4 +65,3 @@ npm run dev
 
 - [@jamil2018](https://www.github.com/jamil2018)
 - [@mdsizer](https://github.com/mdsizer)
-

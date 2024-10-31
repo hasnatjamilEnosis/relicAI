@@ -2,7 +2,6 @@ import { getSettings } from "@/actions/settings/settings-actions";
 import PageContent from "@/components/custom-ui/page-content";
 import PageHeader from "@/components/custom-ui/page-header";
 import UpdateSettings from "@/components/forms/settings/update-settings";
-import UpdateSettings from "@/components/forms/settings/update-settings";
 
 export default async function Settings() {
   const { data } = await getSettings();

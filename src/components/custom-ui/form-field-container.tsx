@@ -3,5 +3,5 @@ export default function FieldContainer({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="my-3">{children}</div>;
+  return <div className="my-1.5">{children}</div>;
 }

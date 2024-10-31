@@ -152,6 +152,7 @@ export default function UpdateSettings({
                   onBlur={handleBlur}
                   required
                   className="w-96"
+                  type="password"
                 />
                 <span
                   className={`${

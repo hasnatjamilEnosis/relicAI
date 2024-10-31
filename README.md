@@ -9,47 +9,59 @@ Users can refine their notes by selecting key parameters such as the JIRA projec
 
 Additionally, RelicAI provides seamless options for exporting meeting notes in Excel format or publishing directly to the JIRA Confluence page on behalf of the user, making it a comprehensive tool for enhancing productivity and team alignment in JIRA-managed projects.
 
-
 ## Prerequisites
 
 * Sourcetree or github desktop client
 * Nodejs 20.x or above
 * Postgres with pgadmin
 * VS Code
+
 ## Installation
 
 * Clone the repository using `sourcetree` or `github desktop`
 * Open the project using `VS Code`
 * Open terminal inside VS Code and run the following command:
-
-```bash
-npm install
-```
+  ```bash
+  npm install
+  ```
 * Open `pgAdmin`, create a new server and create a new database named: `relic_ai`
 * Return to `VS Code`, create a new file named `.env` in the `root` directory.
 * Paste in the following environment variable according to the following format:
-```
-DATABASE_URL="postgresql://<postgres server user>:<postgres server password>@localhost:5432/<database name>?schema=public"
-```
-**Example**
-```
-DATABASE_URL="postgresql://postgres:admin@localhost:5432/relic_core?schema=public"
-```
+  ```bash
+  DATABASE_URL="postgresql://<postgres server user>:<postgres server password>@localhost:5432/<database name>?schema=public"
+  ```
+  **Example**
+  ```bash
+  DATABASE_URL="postgresql://postgres:admin@localhost:5432/relic_core?schema=public"
+  ```
 * Open terminal inside VS Code and run the following command:
-```
-npx prisma migrate dev
-```
+  ```bash
+  npx prisma migrate dev
+  ```
+* Follow the steps under the `JIRA API Setup` section to set the environment variables in the `.env` file
 
+## JIRA API Setup
+- Add the following environment variables in the `.env` file:
+  ```bash
+  JIRA_ORG_URL=<JIRA organization URL>
+  JIRA_USERNAME=<Email id of the JIRA user>
+  JIRA_API_TOKEN=<JIRA API token>
+  ```
+- JIRA_BASE_URL sample: `https://<your_domain>.atlassian.net/rest/api/3/search`
+- Steps to collect the JIRA API token:
+  - Go to your profile page in JIRA
+  - Click the `Security` tab
+  - Under the `API Tokens` section click the `Create and manage API tokens` link
+  - Generate a new API token
 
 ## Run Locally
 
 To start the application in `dev` mode, run the following command:
-```
+```bash
 npm run dev
 ```
-
 
 ## Authors
 
 - [@jamil2018](https://www.github.com/jamil2018)
-
+- [@mdsizer](https://github.com/mdsizer)

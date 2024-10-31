@@ -1,4 +1,7 @@
+"use client";
+
 import FieldContainer from "@/components/custom-ui/form-field-container";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -11,10 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Label } from "@radix-ui/react-label";
+import { Label } from "@/components/ui/label";
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
-import { useState } from "react";
+import { CircleCheck, CircleX } from "lucide-react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 export default function UpdateSettings({
@@ -30,11 +34,28 @@ export default function UpdateSettings({
   currentSelectedUserIds: string;
   userList: { value: string; label: string }[];
 }) {
-  // states for server validation
+  // states
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
   const [showServerValidationError, setShowServerValidationError] =
     useState(false);
   const [serverValidationError, setServerValidationError] = useState("");
+
+  // effects
+  useEffect(() => {
+    if (showSuccessAlert) {
+      setTimeout(() => {
+        setShowSuccessAlert(false);
+      }, 5000);
+    }
+  }, [showSuccessAlert]);
+
+  useEffect(() => {
+    if (showServerValidationError) {
+      setTimeout(() => {
+        setShowServerValidationError(false);
+      }, 5000);
+    }
+  }, [showServerValidationError]);
 
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
@@ -43,12 +64,66 @@ export default function UpdateSettings({
       preferredUsers: currentSelectedUserIds,
     },
     onSubmit: async (values) => {
-      console.log(values.value);
+      const { saveSettings } = await import(
+        "@/actions/settings/settings-actions"
+      );
+
+      const { jiraApiKey, preferredJIRAProject, preferredUsers } = values.value;
+
+      const res = await saveSettings(
+        jiraApiKey,
+        preferredJIRAProject,
+        preferredUsers
+      );
+
+      if (res.status === 200) {
+        setShowSuccessAlert(true);
+      }
+      if (res.status === 400) {
+        setServerValidationError(res.message);
+        setShowServerValidationError(true);
+      }
     },
     validatorAdapter: zodValidator(),
   });
+
   return (
     <>
+      {/* alert */}
+      {/* success alert */}
+      <Alert
+        className={`fixed top-10 left-1/2 w-fit transform -translate-x-1/2 translate-y-0 bg-gray-600 ${
+          showSuccessAlert ? "visible" : "hidden"
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <CircleCheck className="h-6 w-6" />
+          <div>
+            <AlertTitle className="text-lg">Success!</AlertTitle>
+            <AlertDescription className="text-xs">
+              Your settings have been saved.
+            </AlertDescription>
+          </div>
+        </div>
+      </Alert>
+
+      {/* server validation error alert */}
+      <Alert
+        className={`fixed top-10 left-1/2 w-fit transform -translate-x-1/2 translate-y-0 bg-pink-600 ${
+          showServerValidationError ? "visible" : "hidden"
+        }`}
+      >
+        <div className="flex items-center gap-4">
+          <CircleX className="h-6 w-6" />
+          <div>
+            <AlertTitle className="text-lg">Error!</AlertTitle>
+            <AlertDescription className="text-xs">
+              {serverValidationError}
+            </AlertDescription>
+          </div>
+        </div>
+      </Alert>
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -142,6 +217,7 @@ export default function UpdateSettings({
                   Preferred Users
                 </Label>
                 <MultiSelect
+                  className="w-96"
                   id="preferredUsers"
                   options={userList}
                   onValueChange={(values) => handleChange(values.join(", "))}

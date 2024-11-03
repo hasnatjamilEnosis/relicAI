@@ -11,10 +11,11 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
 
 ## Prerequisites
 
-* Sourcetree or github desktop client
-* Nodejs 20.x or above
-* Postgres with pgadmin
-* VS Code
+* [Sourcetree](https://www.sourcetreeapp.com/) or [github desktop](https://desktop.github.com/download/) client
+* [Nodejs](https://nodejs.org/en/download/) 20.x or above
+* [Postgres with pgadmin](https://www.pgadmin.org/download/)
+* [Ollama](https://ollama.com/download)
+* [VS Code](https://code.visualstudio.com/download)
 
 ## Installation
 
@@ -39,6 +40,7 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
   npx prisma migrate dev
   ```
 * Follow the steps under the `JIRA API Setup` section to set the environment variables in the `.env` file
+* Follow the steps under the `LLAMA Setup` section to run and set the environment variables in the `.env` file
 
 ## JIRA API Setup
 - Add the following environment variables in the `.env` file:
@@ -53,6 +55,17 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
   - Click the `Security` tab
   - Under the `API Tokens` section click the `Create and manage API tokens` link
   - Generate a new API token
+
+## LLAMA Setup
+- Follow the steps [here](https://www.llama.com/docs/llama-everywhere/running-meta-llama-on-windows/) to install and run LLAMA model on your local machine
+- Select the OS of your machine accordingly from the `Running Llama` section
+- Add the following environment variables in the `.env` file
+  ```bash
+  LLAMA_PORT=<Port number to access LLAMA model locally>
+  LLAMA_MODEL=<LLAMA model which is configured locally>
+  ```
+- LLAMA_PORT sample: By default it is `11434`
+- LLAMA_PORT sample: If the configured model is Llama 3.2 then the value should be `llama3.2`
 
 ## Run Locally
 

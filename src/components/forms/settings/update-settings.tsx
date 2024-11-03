@@ -22,12 +22,16 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 export default function UpdateSettings({
+  jiraOrgUrl,
+  jiraAuthUserEmail,
   jiraApiKey,
   currentSelectedProjectId,
   projectList,
   currentSelectedUserIds,
   userList,
 }: {
+  jiraOrgUrl: string;
+  jiraAuthUserEmail: string;
   jiraApiKey: string;
   currentSelectedProjectId: string;
   projectList: { value: string; label: string }[];
@@ -59,6 +63,8 @@ export default function UpdateSettings({
 
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
+      jiraOrgUrl: jiraOrgUrl,
+      jiraAuthUserEmail: jiraAuthUserEmail,
       jiraApiKey: jiraApiKey,
       preferredJIRAProject: currentSelectedProjectId,
       preferredUsers: currentSelectedUserIds,
@@ -68,9 +74,17 @@ export default function UpdateSettings({
         "@/actions/settings/settings-actions"
       );
 
-      const { jiraApiKey, preferredJIRAProject, preferredUsers } = values.value;
+      const {
+        jiraOrgUrl,
+        jiraAuthUserEmail,
+        jiraApiKey,
+        preferredJIRAProject,
+        preferredUsers,
+      } = values.value;
 
       const res = await saveSettings(
+        jiraOrgUrl,
+        jiraAuthUserEmail,
         jiraApiKey,
         preferredJIRAProject,
         preferredUsers
@@ -131,6 +145,79 @@ export default function UpdateSettings({
           handleSubmit();
         }}
       >
+        <FieldContainer>
+          <Field
+            name="jiraOrgUrl"
+            validators={{
+              onChange: z.string().min(5, "URL must be at least 5 characters"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label htmlFor="jiraOrgUrl" className="mb-3 block text-sm">
+                  JIRA Org URL
+                </Label>
+                <Input
+                  id="jiraOrgUrl"
+                  value={state.value}
+                  placeholder="organization url"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
+        <FieldContainer>
+          <Field
+            name="jiraAuthUserEmail"
+            validators={{
+              onChange: z
+                .string()
+                .min(6, "Email must be at least 5 characters")
+                .email("Invalid email address"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label
+                  htmlFor="jiraAuthUserEmail"
+                  className="mb-3 block text-sm"
+                >
+                  JIRA Auth User Email
+                </Label>
+                <Input
+                  id="jiraAuthUserEmail"
+                  value={state.value}
+                  placeholder="email address"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                  type="email"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
         <FieldContainer>
           <Field
             name="jiraApiKey"

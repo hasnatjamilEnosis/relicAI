@@ -25,9 +25,15 @@ export default async function Settings() {
         preferredUsers: [],
       };
 
-  const { data: projectListData } = (await getAllJiraProjects()) || [];
+  let { data: projectListData } = await getAllJiraProjects();
+  if (!projectListData) {
+    projectListData = [];
+  }
 
-  const { data: userListData } = (await getAllUsersFromJira()) || [];
+  let { data: userListData } = await getAllUsersFromJira();
+  if (!userListData) {
+    userListData = [];
+  }
 
   return (
     <div>

@@ -5,6 +5,8 @@ import axios from "axios";
 const JIRA_ORG_URL = process.env.JIRA_ORG_URL;
 const JIRA_USERNAME = process.env.JIRA_USERNAME;
 const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
+const LLAMA_PORT = process.env.LLAMA_PORT;
+const LLAMA_MODEL = process.env.LLAMA_MODEL;
 
 /**
  * Generates the Authorization header using Basic Auth for JIRA API requests
@@ -251,5 +253,244 @@ export async function getJiraProjectMembers(projectName: string) {
     return projectMembers;
   } catch (error) {
     console.error("Error fetching project members from JIRA:", error);
+  }
+}
+
+/**
+ * A function to fetch the boards for a specific project in JIRA by project name
+ * @param projectName - The name of the project
+ * @returns an array of boards for the specified project
+ */
+export async function getJiraProjectBoardNames(projectName: string) {
+  console.info("Starting board fetch for project:", projectName);
+
+  try {
+    if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
+      console.error("Missing JIRA configuration environment variables.");
+      throw new Error("Missing JIRA configuration environment variables.");
+    }
+
+    if (!projectName) {
+      console.error("Project name is required.");
+      throw new Error("Project name is required.");
+    }
+
+    const projectKey = await getProjectKeyByName(projectName);
+    if (!projectKey) {
+      throw new Error(`Project with name ${projectName} not found.`);
+    }
+
+    const response = await axios.get(`${JIRA_ORG_URL}/rest/agile/1.0/board`, {
+      headers: {
+        Authorization: getAuthHeader(),
+        "Content-Type": "application/json",
+      },
+      params: { projectKey },
+    });
+
+    if (!response.data.values || response.data.values.length === 0) {
+      throw new Error(`No boards found for project with key ${projectKey}.`);
+    }
+
+    const boards = response.data.values.map(
+      (board: { id: number; name: string; type: string }) => ({
+        id: board.id,
+        name: board.name,
+        type: board.type,
+      })
+    );
+
+    console.info(
+      "Successfully fetched boards for project:",
+      projectName,
+      ". Total boards fetched:",
+      boards.length
+    );
+    return boards;
+  } catch (error) {
+    console.error("Error fetching boards from JIRA:", error);
+  }
+}
+
+/**
+ * A function to fetch sprints for a specific board in JIRA by board name
+ * @param boardName - The name of the board
+ * @returns an array of sprints for the specified board
+ */
+export async function getJiraSprintsByBoardName(boardName: string) {
+  console.info("Starting sprint fetch for board name:", boardName);
+
+  try {
+    if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
+      console.error("Missing JIRA configuration environment variables.");
+      throw new Error("Missing JIRA configuration environment variables.");
+    }
+
+    if (!boardName) {
+      console.error("Board name is required.");
+      throw new Error("Board name is required.");
+    }
+
+    const boardId = await getJiraBoardIdByName(boardName);
+    if (!boardId) {
+      throw new Error(`Board with name ${boardName} not found.`);
+    }
+
+    const response = await axios.get(
+      `${JIRA_ORG_URL}/rest/agile/1.0/board/${boardId}/sprint`,
+      {
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.data.values || response.data.values.length === 0) {
+      throw new Error(`No sprints found for board name ${boardName}.`);
+    }
+
+    const sprints = response.data.values.map(
+      (sprint: {
+        id: number;
+        name: string;
+        state: string;
+        startDate: string;
+        endDate: string;
+      }) => ({
+        id: sprint.id,
+        name: sprint.name,
+        state: sprint.state,
+        startDate: sprint.startDate,
+        endDate: sprint.endDate,
+      })
+    );
+
+    console.info(
+      "Successfully fetched sprints for board name:",
+      boardName,
+      ". Total sprints fetched:",
+      sprints.length
+    );
+    return sprints;
+  } catch (error) {
+    console.error("Error fetching sprints from JIRA:", error);
+  }
+}
+
+/**
+ * A function to fetch the JIRA board ID by board name
+ * @param boardName - The name of the board
+ * @returns the board ID for the specified board name
+ */
+export async function getJiraBoardIdByName(boardName: string) {
+  console.info("Starting fetch for board ID with name:", boardName);
+
+  try {
+    if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
+      console.error("Missing JIRA configuration environment variables.");
+      throw new Error("Missing JIRA configuration environment variables.");
+    }
+
+    if (!boardName) {
+      console.error("Board name is required.");
+      throw new Error("Board name is required.");
+    }
+
+    const response = await axios.get(`${JIRA_ORG_URL}/rest/agile/1.0/board`, {
+      headers: {
+        Authorization: getAuthHeader(),
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.data.values || response.data.values.length === 0) {
+      throw new Error(`No boards found.`);
+    }
+
+    const board = response.data.values.find(
+      (b: { id: number; name: string }) => b.name === boardName
+    );
+
+    if (!board) {
+      throw new Error(`Board with name ${boardName} not found.`);
+    }
+
+    console.info(
+      "Successfully fetched board ID for board name:",
+      boardName,
+      ". Board ID:",
+      board.id
+    );
+    return board.id;
+  } catch (error) {
+    console.error("Error fetching board ID from JIRA:", error);
+  }
+}
+
+/**
+ * A function to interact or analyze content using the locally installed LLAMA model
+ * @param prompt - The prompt to be passed to the LLAMA model
+ * @param fileContent - Optional; the content of a file to be analyzed, if available
+ * @returns the reply from the LLAMA model
+ */
+export async function interactWithLlama(
+  prompt: string,
+  fileContent: string | undefined = undefined
+) {
+  console.info("Starting interaction with LLAMA model.");
+
+  try {
+    if (!LLAMA_PORT || !LLAMA_MODEL) {
+      console.error("Missing LLAMA configuration environment variables.");
+      throw new Error("Missing LLAMA configuration environment variables.");
+    }
+
+    const llamaEndpoint = `http://localhost:${LLAMA_PORT}/api/chat`;
+
+    const data = {
+      model: `${LLAMA_MODEL}`,
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful AI assistant.",
+        },
+      ],
+      stream: false,
+    };
+
+    if (fileContent) {
+      data.messages.push({
+        role: "user",
+        content: `${fileContent}`,
+      });
+    }
+
+    if (!prompt) {
+      console.error("Prompt text is required.");
+      throw new Error("Prompt text is required.");
+    }
+
+    data.messages.push({
+      role: "user",
+      content: `${prompt}`,
+    });
+
+    const response = await axios.post(llamaEndpoint, data);
+
+    if (!response.data || typeof response.data !== "object") {
+      throw new Error("Invalid response format from LLAMA model.");
+    }
+
+    const llamaReply = response.data.message.content;
+
+    if (!llamaReply) {
+      throw new Error(`No reply was returned from LLAMA model.`);
+    }
+
+    console.info("Reply from LLAMA model:", llamaReply);
+    return llamaReply;
+  } catch (error) {
+    console.error("Error during LLAMA model interaction:", error);
   }
 }

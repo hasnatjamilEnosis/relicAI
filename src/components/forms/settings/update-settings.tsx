@@ -43,7 +43,7 @@ export default function UpdateSettings({
   const [showServerValidationError, setShowServerValidationError] =
     useState(false);
   const [serverValidationError, setServerValidationError] = useState("");
-
+  console.log("projectList", projectList);
   // effects
   useEffect(() => {
     if (showSuccessAlert) {
@@ -265,30 +265,43 @@ export default function UpdateSettings({
                 <Label htmlFor="project" className="mb-3 block text-sm">
                   Preferred Project
                 </Label>
-                <Select value={state.value} onValueChange={handleChange}>
-                  <SelectTrigger id="project" className="w-96">
-                    <SelectValue placeholder="Select Preferred Project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Projects</SelectLabel>
-                      {projectList.map((project) => (
-                        <SelectItem key={project.value} value={project.value}>
-                          {project.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <span
-                  className={`${
-                    state.meta.errors.length > 0 ? "visible" : "invisible"
-                  } text-xs text-pink-600 block`}
-                >
-                  {state.meta.errors.length > 0
-                    ? state.meta.errors.join(", ")
-                    : "field error"}
-                </span>
+                {projectList.length === 0 ? (
+                  <>
+                    <span className="text-sm text-gray-500 block">
+                      No projects found. Please ensure JIRA API Key is present.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Select value={state.value} onValueChange={handleChange}>
+                      <SelectTrigger id="project" className="w-96">
+                        <SelectValue placeholder="Select Preferred Project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Projects</SelectLabel>
+                          {projectList.map((project) => (
+                            <SelectItem
+                              key={project.value}
+                              value={project.value}
+                            >
+                              {project.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <span
+                      className={`${
+                        state.meta.errors.length > 0 ? "visible" : "invisible"
+                      } text-xs text-pink-600 block`}
+                    >
+                      {state.meta.errors.length > 0
+                        ? state.meta.errors.join(", ")
+                        : "field error"}
+                    </span>
+                  </>
+                )}
               </>
             )}
           />
@@ -304,30 +317,42 @@ export default function UpdateSettings({
                 <Label htmlFor="preferredUsers" className="mb-3 block text-sm">
                   Preferred Users
                 </Label>
-                <MultiSelect
-                  className="w-96"
-                  id="preferredUsers"
-                  options={userList}
-                  onValueChange={(values) => handleChange(values.join(", "))}
-                  defaultValue={
-                    state.value === ""
-                      ? []
-                      : state.value.split(",").map((v) => v.trim())
-                  }
-                  placeholder="Select Preferred Users"
-                  variant="inverted"
-                  animation={2}
-                  maxCount={3}
-                />
-                <span
-                  className={`${
-                    state.meta.errors.length > 0 ? "visible" : "invisible"
-                  } text-xs text-pink-600 block`}
-                >
-                  {state.meta.errors.length > 0
-                    ? state.meta.errors.join(", ")
-                    : "field error"}
-                </span>
+                {userList.length === 0 ? (
+                  <>
+                    <span className="text-sm text-gray-500 block">
+                      No users found. Please ensure JIRA API Key is present.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <MultiSelect
+                      className="w-96"
+                      id="preferredUsers"
+                      options={userList}
+                      onValueChange={(values) =>
+                        handleChange(values.join(", "))
+                      }
+                      defaultValue={
+                        state.value === ""
+                          ? []
+                          : state.value.split(",").map((v) => v.trim())
+                      }
+                      placeholder="Select Preferred Users"
+                      variant="inverted"
+                      animation={2}
+                      maxCount={3}
+                    />
+                    <span
+                      className={`${
+                        state.meta.errors.length > 0 ? "visible" : "invisible"
+                      } text-xs text-pink-600 block`}
+                    >
+                      {state.meta.errors.length > 0
+                        ? state.meta.errors.join(", ")
+                        : "field error"}
+                    </span>
+                  </>
+                )}
               </>
             )}
           />

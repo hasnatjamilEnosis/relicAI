@@ -22,12 +22,16 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 export default function UpdateSettings({
+  jiraOrgUrl,
+  jiraAuthUserEmail,
   jiraApiKey,
   currentSelectedProjectId,
   projectList,
   currentSelectedUserIds,
   userList,
 }: {
+  jiraOrgUrl: string;
+  jiraAuthUserEmail: string;
   jiraApiKey: string;
   currentSelectedProjectId: string;
   projectList: { value: string; label: string }[];
@@ -39,7 +43,7 @@ export default function UpdateSettings({
   const [showServerValidationError, setShowServerValidationError] =
     useState(false);
   const [serverValidationError, setServerValidationError] = useState("");
-
+  console.log("projectList", projectList);
   // effects
   useEffect(() => {
     if (showSuccessAlert) {
@@ -59,6 +63,8 @@ export default function UpdateSettings({
 
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
+      jiraOrgUrl: jiraOrgUrl,
+      jiraAuthUserEmail: jiraAuthUserEmail,
       jiraApiKey: jiraApiKey,
       preferredJIRAProject: currentSelectedProjectId,
       preferredUsers: currentSelectedUserIds,
@@ -68,9 +74,17 @@ export default function UpdateSettings({
         "@/actions/settings/settings-actions"
       );
 
-      const { jiraApiKey, preferredJIRAProject, preferredUsers } = values.value;
+      const {
+        jiraOrgUrl,
+        jiraAuthUserEmail,
+        jiraApiKey,
+        preferredJIRAProject,
+        preferredUsers,
+      } = values.value;
 
       const res = await saveSettings(
+        jiraOrgUrl,
+        jiraAuthUserEmail,
         jiraApiKey,
         preferredJIRAProject,
         preferredUsers
@@ -133,6 +147,79 @@ export default function UpdateSettings({
       >
         <FieldContainer>
           <Field
+            name="jiraOrgUrl"
+            validators={{
+              onChange: z.string().min(5, "URL must be at least 5 characters"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label htmlFor="jiraOrgUrl" className="mb-3 block text-sm">
+                  JIRA Org URL
+                </Label>
+                <Input
+                  id="jiraOrgUrl"
+                  value={state.value}
+                  placeholder="organization url"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
+        <FieldContainer>
+          <Field
+            name="jiraAuthUserEmail"
+            validators={{
+              onChange: z
+                .string()
+                .min(6, "Email must be at least 5 characters")
+                .email("Invalid email address"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label
+                  htmlFor="jiraAuthUserEmail"
+                  className="mb-3 block text-sm"
+                >
+                  JIRA Auth User Email
+                </Label>
+                <Input
+                  id="jiraAuthUserEmail"
+                  value={state.value}
+                  placeholder="email address"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                  type="email"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
+        <FieldContainer>
+          <Field
             name="jiraApiKey"
             validators={{
               onChange: z
@@ -178,30 +265,43 @@ export default function UpdateSettings({
                 <Label htmlFor="project" className="mb-3 block text-sm">
                   Preferred Project
                 </Label>
-                <Select value={state.value} onValueChange={handleChange}>
-                  <SelectTrigger id="project" className="w-96">
-                    <SelectValue placeholder="Select Preferred Project" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectLabel>Projects</SelectLabel>
-                      {projectList.map((project) => (
-                        <SelectItem key={project.value} value={project.value}>
-                          {project.label}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-                <span
-                  className={`${
-                    state.meta.errors.length > 0 ? "visible" : "invisible"
-                  } text-xs text-pink-600 block`}
-                >
-                  {state.meta.errors.length > 0
-                    ? state.meta.errors.join(", ")
-                    : "field error"}
-                </span>
+                {projectList.length === 0 ? (
+                  <>
+                    <span className="text-sm text-gray-500 block">
+                      No projects found. Please ensure JIRA API Key is present.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Select value={state.value} onValueChange={handleChange}>
+                      <SelectTrigger id="project" className="w-96">
+                        <SelectValue placeholder="Select Preferred Project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Projects</SelectLabel>
+                          {projectList.map((project) => (
+                            <SelectItem
+                              key={project.value}
+                              value={project.value}
+                            >
+                              {project.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <span
+                      className={`${
+                        state.meta.errors.length > 0 ? "visible" : "invisible"
+                      } text-xs text-pink-600 block`}
+                    >
+                      {state.meta.errors.length > 0
+                        ? state.meta.errors.join(", ")
+                        : "field error"}
+                    </span>
+                  </>
+                )}
               </>
             )}
           />
@@ -217,30 +317,42 @@ export default function UpdateSettings({
                 <Label htmlFor="preferredUsers" className="mb-3 block text-sm">
                   Preferred Users
                 </Label>
-                <MultiSelect
-                  className="w-96"
-                  id="preferredUsers"
-                  options={userList}
-                  onValueChange={(values) => handleChange(values.join(", "))}
-                  defaultValue={
-                    state.value === ""
-                      ? []
-                      : state.value.split(",").map((v) => v.trim())
-                  }
-                  placeholder="Select Preferred Users"
-                  variant="inverted"
-                  animation={2}
-                  maxCount={3}
-                />
-                <span
-                  className={`${
-                    state.meta.errors.length > 0 ? "visible" : "invisible"
-                  } text-xs text-pink-600 block`}
-                >
-                  {state.meta.errors.length > 0
-                    ? state.meta.errors.join(", ")
-                    : "field error"}
-                </span>
+                {userList.length === 0 ? (
+                  <>
+                    <span className="text-sm text-gray-500 block">
+                      No users found. Please ensure JIRA API Key is present.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <MultiSelect
+                      className="w-96"
+                      id="preferredUsers"
+                      options={userList}
+                      onValueChange={(values) =>
+                        handleChange(values.join(", "))
+                      }
+                      defaultValue={
+                        state.value === ""
+                          ? []
+                          : state.value.split(",").map((v) => v.trim())
+                      }
+                      placeholder="Select Preferred Users"
+                      variant="inverted"
+                      animation={2}
+                      maxCount={3}
+                    />
+                    <span
+                      className={`${
+                        state.meta.errors.length > 0 ? "visible" : "invisible"
+                      } text-xs text-pink-600 block`}
+                    >
+                      {state.meta.errors.length > 0
+                        ? state.meta.errors.join(", ")
+                        : "field error"}
+                    </span>
+                  </>
+                )}
               </>
             )}
           />

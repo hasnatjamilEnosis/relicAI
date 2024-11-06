@@ -10,6 +10,8 @@ import UpdateSettings from "@/components/forms/settings/update-settings";
 export default async function Settings() {
   const { data: settingsData } = await getSettings();
   const {
+    llamaPort,
+    llamaModel,
     jiraOrgUrl,
     jiraAuthUserEmail,
     jiraApiKey,
@@ -18,6 +20,8 @@ export default async function Settings() {
   } = settingsData
     ? settingsData
     : {
+        llamaPort: "",
+        llamaModel: "",
         jiraOrgUrl: "",
         jiraAuthUserEmail: "",
         jiraApiKey: "",
@@ -40,6 +44,8 @@ export default async function Settings() {
       <PageHeader title="Settings" />
       <PageContent>
         <UpdateSettings
+          llamaModel={llamaModel}
+          llamaPort={llamaPort}
           jiraAuthUserEmail={jiraAuthUserEmail}
           jiraOrgUrl={jiraOrgUrl}
           jiraApiKey={jiraApiKey}

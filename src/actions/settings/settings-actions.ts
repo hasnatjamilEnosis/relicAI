@@ -8,6 +8,8 @@ import axios from "axios";
 import { JiraApiRoutes } from "@/constants/jira/api-routes";
 
 export const saveSettings = async (
+  llamaModel: string,
+  llamaPort: string,
   jiraOrgUrl: string,
   jiraAuthUserEmail: string,
   jiraApiKey: string,
@@ -39,6 +41,8 @@ export const saveSettings = async (
       ? await prisma.settings.update({
           where: { id: existingSettings.id },
           data: {
+            llamaPort: llamaPort,
+            llamaModel: llamaModel,
             jiraAuthUserEmail: jiraAuthUserEmail,
             jiraOrgUrl: jiraOrgUrl,
             jiraApiKey: jiraApiKey,
@@ -48,6 +52,8 @@ export const saveSettings = async (
         })
       : await prisma.settings.create({
           data: {
+            llamaModel: llamaModel,
+            llamaPort: llamaPort,
             jiraAuthUserEmail: jiraAuthUserEmail,
             jiraOrgUrl: jiraOrgUrl,
             jiraApiKey: jiraApiKey,

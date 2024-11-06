@@ -22,6 +22,8 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 export default function UpdateSettings({
+  llamaPort,
+  llamaModel,
   jiraOrgUrl,
   jiraAuthUserEmail,
   jiraApiKey,
@@ -30,6 +32,8 @@ export default function UpdateSettings({
   currentSelectedUserIds,
   userList,
 }: {
+  llamaPort: string;
+  llamaModel: string;
   jiraOrgUrl: string;
   jiraAuthUserEmail: string;
   jiraApiKey: string;
@@ -43,7 +47,7 @@ export default function UpdateSettings({
   const [showServerValidationError, setShowServerValidationError] =
     useState(false);
   const [serverValidationError, setServerValidationError] = useState("");
-  console.log("projectList", projectList);
+
   // effects
   useEffect(() => {
     if (showSuccessAlert) {
@@ -63,6 +67,8 @@ export default function UpdateSettings({
 
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
+      llamaPort: llamaPort,
+      llamaModel: llamaModel,
       jiraOrgUrl: jiraOrgUrl,
       jiraAuthUserEmail: jiraAuthUserEmail,
       jiraApiKey: jiraApiKey,
@@ -75,6 +81,8 @@ export default function UpdateSettings({
       );
 
       const {
+        llamaModel,
+        llamaPort,
         jiraOrgUrl,
         jiraAuthUserEmail,
         jiraApiKey,
@@ -83,6 +91,8 @@ export default function UpdateSettings({
       } = values.value;
 
       const res = await saveSettings(
+        llamaModel,
+        llamaPort,
         jiraOrgUrl,
         jiraAuthUserEmail,
         jiraApiKey,
@@ -145,6 +155,76 @@ export default function UpdateSettings({
           handleSubmit();
         }}
       >
+        <FieldContainer>
+          <Field
+            name="llamaModel"
+            validators={{
+              onChange: z
+                .string()
+                .min(3, "Model name must have at least 3 characters"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label htmlFor="llamaModel" className="mb-3 block text-sm">
+                  LLAMA Model
+                </Label>
+                <Input
+                  id="llamaModel"
+                  value={state.value}
+                  placeholder="llama model name"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
+        <FieldContainer>
+          <Field
+            name="llamaPort"
+            validators={{
+              onChange: z
+                .string()
+                .min(1, "Port must have at least 1 character"),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label htmlFor="llamaPort" className="mb-3 block text-sm">
+                  LLAMA Port
+                </Label>
+                <Input
+                  id="llamaPort"
+                  value={state.value}
+                  placeholder="port"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  required
+                  className="w-96"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
         <FieldContainer>
           <Field
             name="jiraOrgUrl"

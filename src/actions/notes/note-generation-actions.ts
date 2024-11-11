@@ -1,19 +1,26 @@
 "use server";
 
 import axios from "axios";
+import { getSettings } from "../cache/settings-cache";
+import { Settings } from "@prisma/client";
 
-const JIRA_ORG_URL = process.env.JIRA_ORG_URL;
-const JIRA_USERNAME = process.env.JIRA_USERNAME;
-const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
-const LLAMA_PORT = process.env.LLAMA_PORT;
-const LLAMA_MODEL = process.env.LLAMA_MODEL;
+const getSettingsProperty = async (property: keyof Settings) => {
+  const settings = await getSettings();
+
+  if (!settings) throw new Error("Settings not found");
+
+  return settings[property];
+};
 
 /**
  * Generates the Authorization header using Basic Auth for JIRA API requests
  * @returns the base64 encoded authorization header
  */
-const getAuthHeader = () => {
-  const token = Buffer.from(`${JIRA_USERNAME}:${JIRA_API_TOKEN}`).toString(
+const getAuthHeader = async () => {
+  const jiraAuthUserEmail = await getSettingsProperty("jiraAuthUserEmail");
+  const jiraApiKey = await getSettingsProperty("jiraApiKey");
+
+  const token = Buffer.from(`${jiraAuthUserEmail}:${jiraApiKey}`).toString(
     "base64"
   );
   return `Basic ${token}`;
@@ -26,6 +33,10 @@ const getAuthHeader = () => {
 export async function getJiraProjectNames() {
   console.info("Starting JIRA project names fetch request.");
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -34,9 +45,10 @@ export async function getJiraProjectNames() {
 
     console.info("Fetching project names from JIRA organization.");
 
+    const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/api/3/project`, {
       headers: {
-        Authorization: getAuthHeader(),
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
     });
@@ -70,6 +82,10 @@ export async function getProjectKeyByName(
 ): Promise<string | undefined> {
   console.info("Starting project key fetch for project name:", projectName);
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -81,9 +97,10 @@ export async function getProjectKeyByName(
       throw new Error("Project name is required.");
     }
 
+    const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/api/3/project`, {
       headers: {
-        Authorization: getAuthHeader(),
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
     });
@@ -127,6 +144,10 @@ export async function getJiraWorkLogData(
 ) {
   console.info("Starting JIRA work log data fetch request.");
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -148,9 +169,11 @@ export async function getJiraWorkLogData(
     if (!projectKey) {
       throw new Error(`Project with name ${projectName} not found.`);
     }
+
+    const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/api/3/search`, {
       headers: {
-        Authorization: getAuthHeader(),
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
       params: {
@@ -185,6 +208,10 @@ export async function getJiraWorkLogData(
 export async function getJiraProjectMembers(projectName: string) {
   console.info("Starting JIRA project members fetch for project:", projectName);
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -201,11 +228,12 @@ export async function getJiraProjectMembers(projectName: string) {
       throw new Error(`Project with name ${projectName} not found.`);
     }
 
+    const authHeader = await getAuthHeader();
     const rolesResponse = await axios.get(
       `${JIRA_ORG_URL}/rest/api/3/project/${projectKey}/role`,
       {
         headers: {
-          Authorization: getAuthHeader(),
+          Authorization: authHeader,
           "Content-Type": "application/json",
         },
       }
@@ -227,7 +255,7 @@ export async function getJiraProjectMembers(projectName: string) {
     for (const roleUrl of roleUrls) {
       const roleResponse = await axios.get(roleUrl as string, {
         headers: {
-          Authorization: getAuthHeader(),
+          Authorization: authHeader,
           "Content-Type": "application/json",
         },
       });
@@ -264,6 +292,10 @@ export async function getJiraProjectMembers(projectName: string) {
 export async function getJiraProjectBoardNames(projectName: string) {
   console.info("Starting board fetch for project:", projectName);
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -280,9 +312,10 @@ export async function getJiraProjectBoardNames(projectName: string) {
       throw new Error(`Project with name ${projectName} not found.`);
     }
 
+    const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/agile/1.0/board`, {
       headers: {
-        Authorization: getAuthHeader(),
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
       params: { projectKey },
@@ -320,6 +353,10 @@ export async function getJiraProjectBoardNames(projectName: string) {
 export async function getJiraSprintsByBoardName(boardName: string) {
   console.info("Starting sprint fetch for board name:", boardName);
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -336,11 +373,12 @@ export async function getJiraSprintsByBoardName(boardName: string) {
       throw new Error(`Board with name ${boardName} not found.`);
     }
 
+    const authHeader = await getAuthHeader();
     const response = await axios.get(
       `${JIRA_ORG_URL}/rest/agile/1.0/board/${boardId}/sprint`,
       {
         headers: {
-          Authorization: getAuthHeader(),
+          Authorization: authHeader,
           "Content-Type": "application/json",
         },
       }
@@ -386,6 +424,10 @@ export async function getJiraSprintsByBoardName(boardName: string) {
 export async function getJiraBoardIdByName(boardName: string) {
   console.info("Starting fetch for board ID with name:", boardName);
 
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
   try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
@@ -397,9 +439,10 @@ export async function getJiraBoardIdByName(boardName: string) {
       throw new Error("Board name is required.");
     }
 
+    const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/agile/1.0/board`, {
       headers: {
-        Authorization: getAuthHeader(),
+        Authorization: authHeader,
         "Content-Type": "application/json",
       },
     });
@@ -440,13 +483,16 @@ export async function interactWithLlama(
 ) {
   console.info("Starting interaction with LLAMA model.");
 
+  const LLAMA_API_URL = await getSettingsProperty("llamaApiUrl");
+  const LLAMA_MODEL = await getSettingsProperty("llamaModel");
+
   try {
-    if (!LLAMA_PORT || !LLAMA_MODEL) {
+    if (!LLAMA_API_URL || !LLAMA_MODEL) {
       console.error("Missing LLAMA configuration environment variables.");
       throw new Error("Missing LLAMA configuration environment variables.");
     }
 
-    const llamaEndpoint = `http://localhost:${LLAMA_PORT}/api/chat`;
+    const llamaEndpoint = `${LLAMA_API_URL}/api/chat`;
 
     const data = {
       model: `${LLAMA_MODEL}`,

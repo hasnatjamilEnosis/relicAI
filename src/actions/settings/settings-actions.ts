@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthHeader } from "@/utils/authTokenGenerator";
 import axios from "axios";
 import { JiraApiRoutes } from "@/constants/jira/api-routes";
+import { getSettings, refreshSettingsCache } from "../cache/settings-cache";
 
 export const saveSettings = async (
   llamaModel: string,
@@ -63,20 +64,15 @@ export const saveSettings = async (
         });
 
     revalidatePath("/settings");
+    await refreshSettingsCache();
 
     return savedSettings;
   });
 };
 
-export const getSettings = async () => {
-  return handleAction(async () => {
-    return await prisma.settings.findFirst();
-  });
-};
-
 export async function getAllJiraProjects() {
   return handleAction(async () => {
-    const settings = await prisma.settings.findFirst();
+    const settings = await getSettings();
 
     if (!settings) {
       throw new Error("JIRA org name and API key not found in settings.");
@@ -113,7 +109,7 @@ export async function getAllJiraProjects() {
 
 export async function getAllUsersFromJira() {
   return handleAction(async () => {
-    const settings = await prisma.settings.findFirst();
+    const settings = await getSettings();
 
     if (!settings) {
       throw new Error("JIRA org name and API key not found in settings.");

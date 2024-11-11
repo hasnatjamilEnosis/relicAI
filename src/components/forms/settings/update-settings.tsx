@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 
 export default function UpdateSettings({
-  llamaPort,
+  llamaApiUrl,
   llamaModel,
   jiraOrgUrl,
   jiraAuthUserEmail,
@@ -32,7 +32,7 @@ export default function UpdateSettings({
   currentSelectedUserIds,
   userList,
 }: {
-  llamaPort: string;
+  llamaApiUrl: string;
   llamaModel: string;
   jiraOrgUrl: string;
   jiraAuthUserEmail: string;
@@ -67,7 +67,7 @@ export default function UpdateSettings({
 
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
-      llamaPort: llamaPort,
+      llamaApiUrl: llamaApiUrl,
       llamaModel: llamaModel,
       jiraOrgUrl: jiraOrgUrl,
       jiraAuthUserEmail: jiraAuthUserEmail,
@@ -82,7 +82,7 @@ export default function UpdateSettings({
 
       const {
         llamaModel,
-        llamaPort,
+        llamaApiUrl,
         jiraOrgUrl,
         jiraAuthUserEmail,
         jiraApiKey,
@@ -92,7 +92,7 @@ export default function UpdateSettings({
 
       const res = await saveSettings(
         llamaModel,
-        llamaPort,
+        llamaApiUrl,
         jiraOrgUrl,
         jiraAuthUserEmail,
         jiraApiKey,
@@ -192,21 +192,21 @@ export default function UpdateSettings({
         </FieldContainer>
         <FieldContainer>
           <Field
-            name="llamaPort"
+            name="llamaApiUrl"
             validators={{
               onChange: z
                 .string()
-                .min(1, "Port must have at least 1 character"),
+                .min(10, "Api url must have at least 10 character"),
             }}
             children={({ state, handleChange, handleBlur }) => (
               <>
-                <Label htmlFor="llamaPort" className="mb-3 block text-sm">
-                  LLAMA Port
+                <Label htmlFor="llamaApiUrl" className="mb-3 block text-sm">
+                  LLAMA API URL
                 </Label>
                 <Input
-                  id="llamaPort"
+                  id="llamaApiUrl"
                   value={state.value}
-                  placeholder="port"
+                  placeholder="api url"
                   onChange={(e) => handleChange(e.target.value)}
                   onBlur={handleBlur}
                   required

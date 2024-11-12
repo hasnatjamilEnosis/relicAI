@@ -1,16 +1,16 @@
+import { getSettings } from "@/actions/cache/settings-cache";
 import {
   getAllJiraProjects,
   getAllUsersFromJira,
-  getSettings,
 } from "@/actions/settings/settings-actions";
 import PageContent from "@/components/custom-ui/page-content";
 import PageHeader from "@/components/custom-ui/page-header";
 import UpdateSettings from "@/components/forms/settings/update-settings";
 
 export default async function Settings() {
-  const { data: settingsData } = await getSettings();
+  const settingsData = await getSettings();
   const {
-    llamaPort,
+    llamaApiUrl,
     llamaModel,
     jiraOrgUrl,
     jiraAuthUserEmail,
@@ -20,7 +20,7 @@ export default async function Settings() {
   } = settingsData
     ? settingsData
     : {
-        llamaPort: "",
+        llamaApiUrl: "",
         llamaModel: "",
         jiraOrgUrl: "",
         jiraAuthUserEmail: "",
@@ -45,7 +45,7 @@ export default async function Settings() {
       <PageContent>
         <UpdateSettings
           llamaModel={llamaModel}
-          llamaPort={llamaPort}
+          llamaApiUrl={llamaApiUrl}
           jiraAuthUserEmail={jiraAuthUserEmail}
           jiraOrgUrl={jiraOrgUrl}
           jiraApiKey={jiraApiKey}

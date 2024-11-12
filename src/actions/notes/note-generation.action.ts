@@ -17,7 +17,9 @@ interface jiraWorkLogApiResponse {
     };
     timespent?: number;
     status?: {
-      name?: string;
+      statusCategory?: {
+        name?: string;
+      };
     };
     comment?: {
       comments: {
@@ -38,14 +40,14 @@ interface jiraWorkLogApiResponse {
 }
 
 interface formattedSummaryObject {
-  [key: string]: {
-    summary: string;
-    assignee: string;
-    spentTime: number;
-    storyPoint: number | string;
-    comments: string;
-    aiRemarks: string;
-  };
+  key: string;
+  summary: string;
+  assignee: string;
+  spentTime: number;
+  storyPoint: number | string;
+  status: string;
+  comments: string;
+  aiRemarks: string;
 }
 
 const JIRA_ORG_URL = process.env.JIRA_ORG_URL;
@@ -644,8 +646,9 @@ function extractText(commentBody: commentBodyContent[]): string {
 export async function generateSummaryObject(
   data: jiraWorkLogApiResponse[],
   boardId: string
-): Promise<formattedSummaryObject> {
-  const result: formattedSummaryObject = {};
+): Promise<formattedSummaryObject[]> {
+  let summaryObject: formattedSummaryObject;
+  const summaryArray: formattedSummaryObject[] = [];
   console.log("Starting to process Jira work log data.");
 
   const promises = data.map(async (issue) => {
@@ -657,6 +660,7 @@ export async function generateSummaryObject(
       const assignee = issue.fields.assignee?.displayName ?? "";
       const spentTime = issue.fields.timespent ?? 0;
       const storyPoint = await getJiraIssueStoryPoints(key, boardId);
+      const status = issue.fields.status?.statusCategory?.name ?? "";
 
       const comments =
         issue.fields.comment?.comments
@@ -668,20 +672,23 @@ export async function generateSummaryObject(
 
       const aiRemarks =
         comments === ""
-          ? "Not have enough comments!"
+          ? ""
           : await interactWithLlama(
-              "Based on the provided Jira issue comments, define the status of the task in a single keyword [In Progress, Completed, Postponed, Need Feedback] and add single line explanation. The answer should be in the following format:\n Status: <defined status>\n\n Explanation: <1 line explanation>",
+              `Analyze the provided comments of the JIRA issue titled "${summary}". Provide an optimized current task status of the issue in a single line. The status of the JIRA issue is "${status}". Consider the JIRA title and status for optimal and consistent result, do not include them in the result. Also, do not add any prefix, suffix, suggestions or note.`,
               comments
             );
 
-      result[key] = {
+      summaryObject = {
+        key: key,
         summary: summary,
         assignee: assignee,
         spentTime: spentTime,
         storyPoint: storyPoint === undefined ? "N/A" : Number(storyPoint),
+        status: status,
         comments: comments,
         aiRemarks: aiRemarks,
       };
+      summaryArray.push(summaryObject);
     } catch (error) {
       console.error(
         `Error during processing the Jira work log data and formatting the summary object`,
@@ -692,6 +699,6 @@ export async function generateSummaryObject(
 
   return Promise.all(promises).then(() => {
     console.log("Completed processing all issues.");
-    return result;
+    return summaryArray;
   });
 }

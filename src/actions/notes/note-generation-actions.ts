@@ -4,6 +4,54 @@ import axios from "axios";
 import { getSettings } from "../cache/settings-cache";
 import { Settings } from "@prisma/client";
 
+interface commentBodyContent {
+  type: string;
+  text?: string;
+  content?: commentBodyContent[];
+}
+
+interface jiraWorkLogApiResponse {
+  key: string;
+  fields: {
+    summary?: string;
+    assignee?: {
+      displayName?: string;
+    };
+    timespent?: number;
+    status?: {
+      statusCategory?: {
+        name?: string;
+      };
+    };
+    comment?: {
+      comments: {
+        body: {
+          type: string;
+          content: {
+            type: string;
+            text?: string;
+            content?: {
+              type: string;
+              text?: string;
+            }[];
+          }[];
+        };
+      }[];
+    };
+  };
+}
+
+interface formattedSummaryObject {
+  key: string;
+  summary: string;
+  assignee: string;
+  spentTime: number;
+  storyPoint: number | string;
+  status: string;
+  comments: string;
+  aiRemarks: string;
+}
+
 const getSettingsProperty = async (property: keyof Settings) => {
   const settings = await getSettings();
 
@@ -177,9 +225,8 @@ export async function getJiraWorkLogData(
         "Content-Type": "application/json",
       },
       params: {
-        jql: `project = ${projectKey} AND worklogDate >= ${startDate} AND worklogDate <= ${endDate}`,
-        fields:
-          "key,summary,timespent,status,comment,assignee,reporter,priority,issuetype,labels,project",
+        jql: `project = ${projectKey} AND worklogDate >= ${startDate} AND worklogDate <= ${endDate} AND timespent > 0`,
+        fields: "key,summary,comment,timespent,assignee,status",
       },
     });
 
@@ -539,4 +586,170 @@ export async function interactWithLlama(
   } catch (error) {
     console.error("Error during LLAMA model interaction:", error);
   }
+}
+
+/**
+ * A function to fetch the story points of a Jira issue
+ * @param issueId - The ID of the Jira issue
+ * @param boardId - The ID of the Jira board
+ * @returns the story points of the issue, or null if not found.
+ */
+export async function getJiraIssueStoryPoints(
+  issueId: string,
+  boardId: string
+) {
+  console.info(
+    `Starting to fetch story points for issue ID: ${issueId} and board ID: ${boardId}`
+  );
+
+  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
+
+  try {
+    if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
+      console.error("Missing JIRA configuration environment variables.");
+      throw new Error("Missing JIRA configuration environment variables.");
+    }
+
+    if (!issueId || !boardId) {
+      console.error("Jira issue id and board id are required.");
+      throw new Error("Jira issue id and board id are required.");
+    }
+
+    const authHeader = await getAuthHeader();
+    const storyPointFieldResponse = await axios.get(
+      `${JIRA_ORG_URL}/rest/agile/1.0/issue/${issueId}/estimation?boardId=${boardId}`,
+      {
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (
+      !storyPointFieldResponse.data ||
+      !storyPointFieldResponse.data.fieldId
+    ) {
+      throw new Error("No story point field data found.");
+    }
+
+    const fieldId = storyPointFieldResponse.data.fieldId;
+    console.info(`Field ID: ${fieldId}`);
+
+    const storyPointResponse = await axios.get(
+      `${JIRA_ORG_URL}/rest/agile/1.0/issue/${issueId}?fields=${fieldId}`,
+      {
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!storyPointResponse.data || !storyPointResponse.data.fields) {
+      throw new Error("No story point data found.");
+    }
+
+    const storyPoints = storyPointResponse.data.fields[fieldId];
+
+    if (storyPoints === null) {
+      console.warn(`Story points not found for issue: ${issueId}`);
+      return 0;
+    } else {
+      console.info(`Story points for issue ${issueId}: ${storyPoints}`);
+      return Number(storyPoints);
+    }
+  } catch (error) {
+    console.error("Error fetching story points from JIRA:", error);
+  }
+}
+
+/**
+ * A function to recursively extracts plain text from an array of content objects, skipping code blocks
+ * @param commentBody - Array of content objects to process
+ * @returns extracted plain text, concatenated with spaces
+ */
+function extractText(commentBody: commentBodyContent[]): string {
+  return commentBody
+    .map((item) => {
+      if (item.type === "codeBlock") {
+        return "";
+      }
+      if (item.type === "text") {
+        return item.text || "";
+      }
+      if (item.content) {
+        return extractText(item.content);
+      }
+      return "";
+    })
+    .join(" ");
+}
+
+/**
+ * A function to process the Jira work log api response data and returns a formatted summary object
+ * @param data - Jira work log api response
+ * @param boardId - Jira board id
+ * @returns a promise that resolves to an formatted object with issue details
+ */
+export async function generateSummaryObject(
+  data: jiraWorkLogApiResponse[],
+  boardId: string
+): Promise<formattedSummaryObject[]> {
+  let summaryObject: formattedSummaryObject;
+  const summaryArray: formattedSummaryObject[] = [];
+  console.log("Starting to process Jira work log data.");
+
+  const promises = data.map(async (issue) => {
+    try {
+      const key = issue.key;
+      console.log(`Processing issue: ${key}`);
+
+      const summary = issue.fields.summary ?? "";
+      const assignee = issue.fields.assignee?.displayName ?? "";
+      const spentTime = issue.fields.timespent ?? 0;
+      const storyPoint = await getJiraIssueStoryPoints(key, boardId);
+      const status = issue.fields.status?.statusCategory?.name ?? "";
+
+      const comments =
+        issue.fields.comment?.comments
+          .map((comment, index) => {
+            const textContent = extractText(comment.body.content);
+            return `Comment-${index + 1}: ${textContent}`;
+          })
+          .join(" ") || "";
+
+      const aiRemarks =
+        comments === ""
+          ? ""
+          : await interactWithLlama(
+              `Analyze the provided comments of the JIRA issue titled "${summary}". Provide an optimized current task status of the issue in a single line. The status of the JIRA issue is "${status}". Consider the JIRA title and status for optimal and consistent result, do not include them in the result. Also, do not add any prefix, suffix, suggestions or note.`,
+              comments
+            );
+
+      summaryObject = {
+        key: key,
+        summary: summary,
+        assignee: assignee,
+        spentTime: spentTime,
+        storyPoint: storyPoint === undefined ? "N/A" : Number(storyPoint),
+        status: status,
+        comments: comments,
+        aiRemarks: aiRemarks,
+      };
+      summaryArray.push(summaryObject);
+    } catch (error) {
+      console.error(
+        `Error during processing the Jira work log data and formatting the summary object`,
+        error
+      );
+    }
+  });
+
+  return Promise.all(promises).then(() => {
+    console.log("Completed processing all issues.");
+    return summaryArray;
+  });
 }

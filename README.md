@@ -13,7 +13,7 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
 
 * [Sourcetree](https://www.sourcetreeapp.com/) or [github desktop](https://desktop.github.com/download/) client
 * [Nodejs](https://nodejs.org/en/download/) 20.x or above
-* [Postgres with pgadmin](https://www.pgadmin.org/download/)
+* [Postgres with pgadmin](https://www.postgresql.org/download/)
 * [Ollama](https://ollama.com/download)
 * [VS Code](https://code.visualstudio.com/download)
 
@@ -49,7 +49,7 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
   JIRA_USERNAME=<Email id of the JIRA user>
   JIRA_API_TOKEN=<JIRA API token>
   ```
-- JIRA_BASE_URL sample: `https://<your_domain>.atlassian.net/rest/api/3/search`
+- JIRA_ORG_URL sample: `https://<your_domain>.atlassian.net`
 - Steps to collect the JIRA API token:
   - Go to your profile page in JIRA
   - Click the `Security` tab
@@ -61,11 +61,11 @@ Additionally, RelicAI provides seamless options for exporting meeting notes in E
 - Select the OS of your machine accordingly from the `Running Llama` section
 - Add the following environment variables in the `.env` file
   ```bash
-  LLAMA_PORT=<Port number to access LLAMA model locally>
+  LLAMA_BASE_URL=<LLAMA base URL>
   LLAMA_MODEL=<LLAMA model which is configured locally>
   ```
-- LLAMA_PORT sample: By default it is `11434`
-- LLAMA_PORT sample: If the configured model is Llama 3.2 then the value should be `llama3.2`
+- LLAMA_BASE_URL sample: If the LLAMA is hosted locally then the base URL should be `http://localhost:11434`
+- LLAMA_MODEL sample: If the configured model is Llama 3.2 then the value should be `llama3.2`
 
 ## Run Locally
 

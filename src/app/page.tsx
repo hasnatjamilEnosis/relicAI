@@ -1,9 +1,7 @@
 import { getSettings } from "@/actions/cache/settings-cache";
 import {
   getAllJiraBoards,
-  getAllJiraBoardsByProjectKey,
   getAllJiraSprints,
-  getAllJiraSprintsByBoardId,
 } from "@/actions/notes/note-generation-actions";
 import {
   getAllJiraProjects,
@@ -28,23 +26,12 @@ export default async function Home() {
     jiraSprintId: "",
     jiraSprintName: "",
   };
+
   const { data: projectListData = [] } = await getAllJiraProjects();
   const { data: userListData = [] } = await getAllUsersFromJira();
-
-  const getSprints = async (boardId: string) => {
-    "use server";
-    if (!boardId) return [];
-    const sprintsData = await getAllJiraSprintsByBoardId(boardId);
-    const { data } = sprintsData;
-    if (!data) {
-      return [];
-    }
-    return data as { value: string; label: string }[];
-  };
-
   const { data: boardList } = await getAllJiraBoards();
   const { data: sprintList } = await getAllJiraSprints();
-  console.log(sprintList);
+
   return (
     <div>
       <PageHeader title="Home" />

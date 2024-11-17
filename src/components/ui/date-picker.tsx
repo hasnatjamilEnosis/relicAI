@@ -27,7 +27,7 @@ export function DatePicker({
 
   React.useEffect(() => {
     if (date) {
-      onChange(date.toDateString());
+      onChange(date.toISOString().split("T")[0]);
     }
   }, [date]);
 

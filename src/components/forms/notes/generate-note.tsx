@@ -3,7 +3,6 @@
 import FieldContainer from "@/components/custom-ui/form-field-container";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 
 export default function GenerateNote({
@@ -43,6 +42,8 @@ export default function GenerateNote({
     sprints: { value: string; label: string }[];
   }[];
 }) {
+  // router
+  const router = useRouter();
   // form handler
   const { Field, Subscribe, handleSubmit } = useForm({
     defaultValues: {
@@ -54,9 +55,20 @@ export default function GenerateNote({
       users: preferredUsers,
     },
     onSubmit: async (values) => {
-      const { boardId, projectId, sprintId, startDate, endDate } = values.value;
+      const { boardId, projectId, sprintId, startDate, endDate, users } =
+        values.value;
+      const extractedBoardId = boardId.split("-")[1];
+      const extractedSplitId = sprintId.split("-")[1];
 
-      console.log("values: ", values);
+      const queryObject = {
+        boardId: extractedBoardId,
+        projectId,
+        sprintId: extractedSplitId,
+        startDate,
+        endDate,
+        users,
+      };
+      router.push("/preview?" + new URLSearchParams(queryObject).toString());
     },
     validatorAdapter: zodValidator(),
   });
@@ -321,7 +333,7 @@ export default function GenerateNote({
                             projectSprint.sprints.map((sprint) => (
                               <SelectItem
                                 key={projectSprint.projectKey + sprint.value}
-                                value={`${projectSprint.projectKey}-${sprint.value}`}
+                                value={`${projectSprint.projectKey}-${sprint.label}`}
                               >
                                 {projectSprint.projectKey} - {sprint.label}
                               </SelectItem>
@@ -349,7 +361,7 @@ export default function GenerateNote({
           selector={(state) => [state.canSubmit, state.isSubmitting]}
           children={([canSubmit, isSubmitting]) => (
             <Button type="submit" disabled={!canSubmit}>
-              {isSubmitting ? "Saving..." : "Save"}
+              {isSubmitting ? "Generating..." : "Generate"}
             </Button>
           )}
         />

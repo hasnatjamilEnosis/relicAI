@@ -3,6 +3,8 @@
 import axios from "axios";
 import { getSettings } from "../cache/settings-cache";
 import { Settings } from "@prisma/client";
+import { handleAction } from "@/utils/actionHandler";
+import { getAllJiraProjects } from "../settings/settings-actions";
 
 interface commentBodyContent {
   type: string;
@@ -55,7 +57,10 @@ interface formattedSummaryObject {
 const getSettingsProperty = async (property: keyof Settings) => {
   const settings = await getSettings();
 
-  if (!settings) throw new Error("Settings not found");
+  if (!settings)
+    throw new Error(
+      "Settings not found. Please ensure that you have set up all the required settings in the settings page."
+    );
 
   return settings[property];
 };
@@ -336,27 +341,14 @@ export async function getJiraProjectMembers(projectName: string) {
  * @param projectName - The name of the project
  * @returns an array of boards for the specified project
  */
-export async function getJiraProjectBoardNames(projectName: string) {
-  console.info("Starting board fetch for project:", projectName);
+export async function getAllJiraBoardsByProjectKey(projectKey: string) {
+  return handleAction(async () => {
+    const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+    const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+    const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
 
-  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
-  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
-  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
-
-  try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
-      console.error("Missing JIRA configuration environment variables.");
       throw new Error("Missing JIRA configuration environment variables.");
-    }
-
-    if (!projectName) {
-      console.error("Project name is required.");
-      throw new Error("Project name is required.");
-    }
-
-    const projectKey = await getProjectKeyByName(projectName);
-    if (!projectKey) {
-      throw new Error(`Project with name ${projectName} not found.`);
     }
 
     const authHeader = await getAuthHeader();
@@ -374,22 +366,67 @@ export async function getJiraProjectBoardNames(projectName: string) {
 
     const boards = response.data.values.map(
       (board: { id: number; name: string; type: string }) => ({
-        id: board.id,
-        name: board.name,
+        value: board.id,
+        label: board.name,
         type: board.type,
       })
     );
 
-    console.info(
-      "Successfully fetched boards for project:",
-      projectName,
-      ". Total boards fetched:",
-      boards.length
-    );
     return boards;
-  } catch (error) {
-    console.error("Error fetching boards from JIRA:", error);
-  }
+  });
+}
+
+export async function getAllJiraBoards() {
+  return handleAction(async () => {
+    const { data } = await getAllJiraProjects();
+    if (!data) {
+      throw new Error("No projects found");
+    }
+    const projectKeys: string[] = data.map(
+      (project: { value: string; label: string }) => project.value
+    );
+    const boardPromises = projectKeys.map(async (key) => {
+      const { data } = await getAllJiraBoardsByProjectKey(key);
+      return {
+        projectKey: key,
+        boards: data as { value: string; label: string; type: string }[],
+      };
+    });
+    const boardData = await Promise.all(boardPromises);
+    return boardData;
+  });
+}
+
+export async function getAllJiraSprints() {
+  return handleAction(async () => {
+    const { data } = await getAllJiraBoards();
+    if (!data) {
+      throw new Error("No boards found");
+    }
+    const projectBoardIds = data
+      .map((project) =>
+        project.boards.map((board) => ({
+          projectKey: project.projectKey,
+          boardId: board.value,
+          boardName: board.label,
+        }))
+      )
+      .flat();
+    const sprintPromises = projectBoardIds.map(async (board) => {
+      const { data } = await getAllJiraSprintsByBoardId(board.boardId);
+      return {
+        projectKey: board.projectKey,
+        boardId: board.boardId,
+        boardName: board.boardName,
+        sprints: data as { value: string; label: string }[],
+      };
+    });
+    const sprintData = await Promise.all(sprintPromises);
+    const filteredSprintData = sprintData.filter(
+      (segment) => segment.sprints !== null && segment.sprints.length > 0
+    );
+    return filteredSprintData;
+  });
 }
 
 /**
@@ -397,27 +434,19 @@ export async function getJiraProjectBoardNames(projectName: string) {
  * @param boardName - The name of the board
  * @returns an array of sprints for the specified board
  */
-export async function getJiraSprintsByBoardName(boardName: string) {
-  console.info("Starting sprint fetch for board name:", boardName);
+export async function getAllJiraSprintsByBoardId(boardId: string) {
+  return handleAction(async () => {
+    const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
+    const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
+    const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
 
-  const JIRA_ORG_URL = await getSettingsProperty("jiraOrgUrl");
-  const JIRA_USERNAME = await getSettingsProperty("jiraAuthUserEmail");
-  const JIRA_API_TOKEN = await getSettingsProperty("jiraApiKey");
-
-  try {
     if (!JIRA_ORG_URL || !JIRA_USERNAME || !JIRA_API_TOKEN) {
       console.error("Missing JIRA configuration environment variables.");
       throw new Error("Missing JIRA configuration environment variables.");
     }
 
-    if (!boardName) {
-      console.error("Board name is required.");
-      throw new Error("Board name is required.");
-    }
-
-    const boardId = await getJiraBoardIdByName(boardName);
     if (!boardId) {
-      throw new Error(`Board with name ${boardName} not found.`);
+      throw new Error(`No board ID provided.`);
     }
 
     const authHeader = await getAuthHeader();
@@ -432,7 +461,7 @@ export async function getJiraSprintsByBoardName(boardName: string) {
     );
 
     if (!response.data.values || response.data.values.length === 0) {
-      throw new Error(`No sprints found for board name ${boardName}.`);
+      throw new Error(`No sprints found for board id ${boardId}.`);
     }
 
     const sprints = response.data.values.map(
@@ -443,24 +472,12 @@ export async function getJiraSprintsByBoardName(boardName: string) {
         startDate: string;
         endDate: string;
       }) => ({
-        id: sprint.id,
-        name: sprint.name,
-        state: sprint.state,
-        startDate: sprint.startDate,
-        endDate: sprint.endDate,
+        value: sprint.id,
+        label: sprint.name,
       })
     );
-
-    console.info(
-      "Successfully fetched sprints for board name:",
-      boardName,
-      ". Total sprints fetched:",
-      sprints.length
-    );
     return sprints;
-  } catch (error) {
-    console.error("Error fetching sprints from JIRA:", error);
-  }
+  });
 }
 
 /**

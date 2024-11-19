@@ -50,7 +50,6 @@ interface formattedSummaryObject {
   spentTime: number;
   storyPoint: number | string;
   status: string;
-  comments: string;
   aiRemarks: string;
 }
 
@@ -191,7 +190,7 @@ export async function getProjectKeyByName(
  * @returns the fetched work log data
  */
 export async function getJiraWorkLogData(
-  projectName: string,
+  projectKey: string,
   startDate: string,
   endDate: string
 ) {
@@ -207,21 +206,16 @@ export async function getJiraWorkLogData(
       throw new Error("Missing JIRA configuration environment variables.");
     }
 
-    if (!projectName || !startDate || !endDate) {
+    if (!projectKey || !startDate || !endDate) {
       console.error("Missing function parameter value(s).");
       throw new Error("Missing function parameter value(s).");
     }
 
     console.info("Fetching work log data from JIRA:", {
-      projectName,
+      projectKey,
       startDate,
       endDate,
     });
-
-    const projectKey = await getProjectKeyByName(projectName);
-    if (!projectKey) {
-      throw new Error(`Project with name ${projectName} not found.`);
-    }
 
     const authHeader = await getAuthHeader();
     const response = await axios.get(`${JIRA_ORG_URL}/rest/api/3/search`, {
@@ -753,7 +747,6 @@ export async function generateSummaryObject(
         spentTime: spentTime,
         storyPoint: storyPoint === undefined ? "N/A" : Number(storyPoint),
         status: status,
-        comments: comments,
         aiRemarks: aiRemarks,
       };
       summaryArray.push(summaryObject);

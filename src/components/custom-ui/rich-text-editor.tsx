@@ -54,10 +54,8 @@ import {
 } from "lucide-react";
 import { Level } from "@tiptap/extension-heading";
 
-export default function ConfluenceEditor() {
-  const [content, setContent] = useState(
-    "<p>Edit your meeting note according to your needs!</p>"
-  );
+export default function Editor({ htmlContent }: { htmlContent: string }) {
+  const [content, setContent] = useState(htmlContent);
 
   const editor = useEditor({
     extensions: [
@@ -95,6 +93,7 @@ export default function ConfluenceEditor() {
     onUpdate: ({ editor }) => {
       setContent(editor.getHTML());
     },
+    immediatelyRender: false,
   });
 
   if (!editor) {
@@ -168,7 +167,7 @@ export default function ConfluenceEditor() {
 
   return (
     <div className="w-[80vw]">
-      <div className="border-b sticky top-0 z-10">
+      <div className="border-b sticky top-0 z-10 bg-primary-foreground">
         <div className="container mx-auto px-4 py-2 flex flex-wrap gap-2">
           <Button
             variant="ghost"

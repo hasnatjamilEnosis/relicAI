@@ -86,7 +86,7 @@ export default function GenerateNote({
           <Field
             name="startDate"
             validators={{
-              onChange: z.string(),
+              onChange: z.string().min(6, "Start Date is required"),
             }}
             children={({ state, handleChange }) => (
               <>
@@ -115,7 +115,7 @@ export default function GenerateNote({
           <Field
             name="endDate"
             validators={{
-              onChange: z.string(),
+              onChange: z.string().min(6, "End Date is required"),
             }}
             children={({ state, handleChange }) => (
               <>
@@ -144,7 +144,7 @@ export default function GenerateNote({
           <Field
             name="projectId"
             validators={{
-              onChange: z.string().optional(),
+              onChange: z.string().min(1, "Project is required"),
             }}
             children={({ state, handleChange }) => (
               <>
@@ -196,7 +196,7 @@ export default function GenerateNote({
           <Field
             name="users"
             validators={{
-              onChange: z.string().optional(),
+              onChange: z.string().min(1, "Users are required"),
             }}
             children={({ state, handleChange }) => (
               <>
@@ -247,7 +247,7 @@ export default function GenerateNote({
           <Field
             name="boardId"
             validators={{
-              onChange: z.string().optional(),
+              onChange: z.string().min(1, "Board is required"),
             }}
             children={({ state, handleChange }) => (
               <>

@@ -183,16 +183,18 @@ export async function getProjectKeyByName(
 }
 
 /**
- * A function to fetch JIRA work log data of any specific project within a specified date range
- * @param projectName - The name of the project
+ * A function to fetch JIRA work log data of any specific project or sprint within a specified date range
+ * @param projectKey - The key of the project
  * @param startDate - The start date of the expected work log data
  * @param endDate - The end date of the expected work log data
+ * @param sprintId - The optional sprint ID
  * @returns the fetched work log data
  */
 export async function getJiraWorkLogData(
   projectKey: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  sprintId?: string
 ) {
   console.info("Starting JIRA work log data fetch request.");
 
@@ -215,16 +217,44 @@ export async function getJiraWorkLogData(
       projectKey,
       startDate,
       endDate,
+      sprintId,
     });
 
     const authHeader = await getAuthHeader();
+    let jql: string;
+
+    if (sprintId) {
+      const sprintResponse = await axios.get(
+        `${JIRA_ORG_URL}/rest/agile/1.0/sprint/${sprintId}/issue`,
+        {
+          headers: {
+            Authorization: authHeader,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!sprintResponse.data.issues) {
+        throw new Error(
+          `Failed to fetch issues for sprint ${sprintId}: ${sprintResponse.statusText}`
+        );
+      }
+
+      const issueKeys = sprintResponse.data.issues.map(
+        (issue: jiraWorkLogApiResponse) => issue.key
+      );
+      jql = `issueKey in (${issueKeys.join(",")})`;
+    } else {
+      jql = `project = ${projectKey} AND worklogDate >= ${startDate} AND worklogDate <= ${endDate} AND timespent > 0`;
+    }
+
     const response = await axios.get(`${JIRA_ORG_URL}/rest/api/3/search`, {
       headers: {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
       params: {
-        jql: `project = ${projectKey} AND worklogDate >= ${startDate} AND worklogDate <= ${endDate} AND timespent > 0`,
+        jql: jql,
         fields: "key,summary,comment,timespent,assignee,status",
       },
     });

@@ -31,6 +31,7 @@ export default function UpdateSettings({
   projectList,
   currentSelectedUserIds,
   userList,
+  confluenceSpaceName,
 }: {
   llamaApiUrl: string;
   llamaModel: string;
@@ -41,6 +42,7 @@ export default function UpdateSettings({
   projectList: { value: string; label: string }[];
   currentSelectedUserIds: string;
   userList: { value: string; label: string }[];
+  confluenceSpaceName: string;
 }) {
   // states
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -74,6 +76,7 @@ export default function UpdateSettings({
       jiraApiKey: jiraApiKey,
       preferredJIRAProject: currentSelectedProjectId,
       preferredUsers: currentSelectedUserIds,
+      confluenceSpaceName: confluenceSpaceName,
     },
     onSubmit: async (values) => {
       const { saveSettings } = await import(
@@ -88,6 +91,7 @@ export default function UpdateSettings({
         jiraApiKey,
         preferredJIRAProject,
         preferredUsers,
+        confluenceSpaceName,
       } = values.value;
 
       const res = await saveSettings(
@@ -97,7 +101,8 @@ export default function UpdateSettings({
         jiraAuthUserEmail,
         jiraApiKey,
         preferredJIRAProject,
-        preferredUsers
+        preferredUsers,
+        confluenceSpaceName
       );
 
       if (res.status === 200) {
@@ -436,6 +441,47 @@ export default function UpdateSettings({
               </>
             )}
           />
+          <FieldContainer>
+            <Field
+              name="confluenceSpaceName"
+              validators={{
+                onChange: z
+                  .string()
+                  .min(
+                    3,
+                    "Confluence space name must have at least 3 characters"
+                  ),
+              }}
+              children={({ state, handleChange, handleBlur }) => (
+                <>
+                  <Label
+                    htmlFor="confluenceSpaceName"
+                    className="mb-3 block text-sm"
+                  >
+                    Confluence Space Name
+                  </Label>
+                  <Input
+                    id="confluenceSpaceName"
+                    value={state.value}
+                    placeholder="space name"
+                    onChange={(e) => handleChange(e.target.value)}
+                    onBlur={handleBlur}
+                    required
+                    className="w-96"
+                  />
+                  <span
+                    className={`${
+                      state.meta.errors.length > 0 ? "visible" : "invisible"
+                    } text-xs text-pink-600 block`}
+                  >
+                    {state.meta.errors.length > 0
+                      ? state.meta.errors.join(", ")
+                      : "field error"}
+                  </span>
+                </>
+              )}
+            />
+          </FieldContainer>
         </FieldContainer>
         <Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting]}

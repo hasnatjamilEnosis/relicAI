@@ -17,6 +17,7 @@ export default async function Settings() {
     jiraApiKey,
     preferredProject,
     preferredUsers,
+    confluenceSpaceName,
   } = settingsData
     ? settingsData
     : {
@@ -27,6 +28,7 @@ export default async function Settings() {
         jiraApiKey: "",
         preferredProject: "",
         preferredUsers: [],
+        confluenceSpaceName: "",
       };
 
   let { data: projectListData } = await getAllJiraProjects();
@@ -53,6 +55,7 @@ export default async function Settings() {
           projectList={projectListData}
           currentSelectedUserIds={preferredUsers.join(",")}
           userList={userListData}
+          confluenceSpaceName={confluenceSpaceName}
         />
       </PageContent>
     </div>

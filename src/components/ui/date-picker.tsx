@@ -24,15 +24,18 @@ export function DatePicker({
   onChange: (updater: Updater<string>) => void;
 }) {
   const [date, setDate] = React.useState<Date>();
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
 
   React.useEffect(() => {
     if (date) {
-      onChange(date.toISOString().split("T")[0]);
+      onChange(
+        `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
+      );
     }
   }, [date]);
 
   return (
-    <Popover>
+    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
       <PopoverTrigger asChild>
         <Button
           id={id}
@@ -50,8 +53,11 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={date}
-          onSelect={setDate}
           initialFocus
+          onSelect={(e) => {
+            setDate(e);
+            setIsCalendarOpen(false);
+          }}
         />
       </PopoverContent>
     </Popover>

@@ -15,7 +15,8 @@ export const saveSettings = async (
   jiraAuthUserEmail: string,
   jiraApiKey: string,
   preferredProjectId: string,
-  preferredUsersIds: string
+  preferredUsersIds: string,
+  confluenceSpaceName: string
 ) => {
   return handleAction(async () => {
     if (!jiraOrgUrl || jiraOrgUrl.trim() === "") {
@@ -49,6 +50,7 @@ export const saveSettings = async (
             jiraApiKey: jiraApiKey,
             preferredProject: preferredProjectId,
             preferredUsers: preferredUsersIdsArray,
+            confluenceSpaceName: confluenceSpaceName,
           },
         })
       : await prisma.settings.create({
@@ -60,6 +62,7 @@ export const saveSettings = async (
             jiraApiKey: jiraApiKey,
             preferredProject: preferredProjectId,
             preferredUsers: preferredUsersIdsArray,
+            confluenceSpaceName: confluenceSpaceName,
           },
         });
 
@@ -139,7 +142,7 @@ export async function getAllUsersFromJira() {
 
     const formattedUsers = users
       .map((user: any) => ({
-        value: user.accountId,
+        value: user.displayName,
         label: user.displayName,
         accountType: user.accountType,
       }))

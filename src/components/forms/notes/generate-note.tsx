@@ -3,6 +3,7 @@
 import FieldContainer from "@/components/custom-ui/form-field-container";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
 import {
@@ -53,10 +54,18 @@ export default function GenerateNote({
       boardId: "",
       sprintId: "",
       users: preferredUsers,
+      customFields: "",
     },
     onSubmit: async (values) => {
-      const { boardId, projectId, sprintId, startDate, endDate, users } =
-        values.value;
+      const {
+        boardId,
+        projectId,
+        sprintId,
+        startDate,
+        endDate,
+        users,
+        customFields,
+      } = values.value;
       const extractedBoardId = boardId.split("-")[1];
       const extractedSplitId = sprintId.split("-")[1];
 
@@ -67,6 +76,7 @@ export default function GenerateNote({
         startDate,
         endDate,
         users,
+        customFields,
       };
       router.push("/preview?" + new URLSearchParams(queryObject).toString());
     },
@@ -253,6 +263,10 @@ export default function GenerateNote({
               <>
                 <Label htmlFor="board" className="mb-3 block text-sm">
                   Board
+                  <span className="text-xs text-muted-foreground">
+                    {" "}
+                    (Project key - Board name)
+                  </span>
                 </Label>
                 {boardList?.length === 0 || !boardList ? (
                   <>
@@ -313,6 +327,10 @@ export default function GenerateNote({
               <>
                 <Label htmlFor="sprint" className="mb-3 block text-sm">
                   Sprint
+                  <span className="text-xs text-muted-foreground">
+                    {" "}
+                    (Project key - Sprint name)
+                  </span>
                 </Label>
                 {boardList?.length === 0 || !boardList ? (
                   <>
@@ -357,6 +375,46 @@ export default function GenerateNote({
             )}
           />
         </FieldContainer>
+        <FieldContainer>
+          <Field
+            name="customFields"
+            validators={{
+              onChange: z
+                .string()
+                .min(2, "Custom fields must have at least 2 characters")
+                .optional(),
+            }}
+            children={({ state, handleChange, handleBlur }) => (
+              <>
+                <Label htmlFor="customFields" className="mb-3 block text-sm">
+                  Custom Fields{" "}
+                  <span className="text-xs text-muted-foreground">
+                    {" "}
+                    (Add field names separated by comma)
+                  </span>
+                </Label>
+                <Input
+                  id="customFields"
+                  value={state.value}
+                  placeholder="fields"
+                  onChange={(e) => handleChange(e.target.value)}
+                  onBlur={handleBlur}
+                  className="w-96"
+                />
+                <span
+                  className={`${
+                    state.meta.errors.length > 0 ? "visible" : "invisible"
+                  } text-xs text-pink-600 block`}
+                >
+                  {state.meta.errors.length > 0
+                    ? state.meta.errors.join(", ")
+                    : "field error"}
+                </span>
+              </>
+            )}
+          />
+        </FieldContainer>
+
         <Subscribe
           selector={(state) => [state.canSubmit, state.isSubmitting]}
           children={([canSubmit, isSubmitting]) => (

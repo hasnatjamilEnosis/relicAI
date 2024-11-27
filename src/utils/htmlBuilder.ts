@@ -43,7 +43,8 @@ export class HTMLElement {
 
 export function generateHTMLTable(
   dataArray: Record<string, any>[],
-  skipFields: string[] = [] // Optional parameter with a default empty array
+  skipFields: string[] = [], // Optional parameter to skip fields
+  extraColumns: string[] = [] // Additional column names to append
 ): HTMLElement {
   const table = new HTMLElement("table");
 
@@ -56,20 +57,30 @@ export function generateHTMLTable(
   const formatTitle = (key: string): string =>
     key.replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase();
 
+  // Combine main keys with extra columns for the header
+  const allKeys = [...keys, ...extraColumns];
+
   // Add header row with formatted titles
   const headerRow = new HTMLElement("tr").addChildren(
-    keys.map((key) => new HTMLElement("th").addChild(formatTitle(key)))
+    allKeys.map((key) => new HTMLElement("th").addChild(formatTitle(key)))
   );
   table.addChild(headerRow);
 
   // Add data rows
   dataArray.forEach((data) => {
     const dataRow = new HTMLElement("tr").addChildren(
-      keys.map((key) => {
-        if (key === "spentTime") {
-          return new HTMLElement("td").addChild(secondsToTimeFormat(data[key]));
+      allKeys.map((key) => {
+        if (keys.includes(key)) {
+          // Populate values for main keys
+          if (key === "spentTime") {
+            return new HTMLElement("td").addChild(
+              secondsToTimeFormat(data[key])
+            );
+          }
+          return new HTMLElement("td").addChild(String(data[key]));
         }
-        return new HTMLElement("td").addChild(String(data[key]));
+        // Leave extra columns empty
+        return new HTMLElement("td").addChild("");
       })
     );
     table.addChild(dataRow);

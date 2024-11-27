@@ -35,6 +35,32 @@ async function createConfluenceSpace(
     `SpaceKey=${spaceKey}, SpaceName=${spaceName}`
   );
 
+  const headers = {
+    Authorization: authHeader,
+    "Content-Type": "application/json",
+  };
+
+  const spaceCheckUrl = `${confluenceUrl}/wiki/rest/api/space/${spaceKey}`;
+  const spaceExistsResponse = await axios
+    .get(spaceCheckUrl, { headers })
+    .catch((error) => error.response);
+
+  if (spaceExistsResponse && spaceExistsResponse.status === 200) {
+    console.info(
+      "Confluence space already exists:",
+      `SpaceKey=${spaceKey}, SpaceName=${spaceName}`
+    );
+    return true;
+  }
+
+  if (!spaceExistsResponse || spaceExistsResponse.status !== 404) {
+    console.error(
+      "Error checking Confluence space existence:",
+      spaceExistsResponse?.status || "Unknown error"
+    );
+    return false;
+  }
+
   const data = {
     key: spaceKey,
     name: spaceName,
@@ -46,40 +72,26 @@ async function createConfluenceSpace(
     },
   };
 
-  try {
-    const response = await axios.post(
-      `${confluenceUrl}/wiki/rest/api/space`,
-      data,
-      {
-        headers: {
-          Authorization: authHeader,
-          "Content-Type": "application/json",
-        },
-      }
+  const createSpaceResponse = await axios
+    .post(`${confluenceUrl}/wiki/rest/api/space`, data, { headers })
+    .catch((error) => error.response);
+
+  if (
+    createSpaceResponse &&
+    (createSpaceResponse.status === 200 || createSpaceResponse.status === 201)
+  ) {
+    console.info(
+      "Space successfully created:",
+      `SpaceKey=${spaceKey}, SpaceName=${spaceName}`
     );
-
-    const isSuccess = response.status === 200 || response.status === 201;
-
-    if (isSuccess) {
-      console.info(
-        "Space successfully created:",
-        `SpaceKey=${spaceKey}, SpaceName=${spaceName}`
-      );
-    }
-
-    return isSuccess;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response?.status === 400) {
-      console.info(
-        "Confluence space already exists:",
-        `SpaceKey=${spaceKey}, SpaceName=${spaceName}`
-      );
-      return true;
-    } else {
-      console.error("Error creating Confluence space:", error);
-      return false;
-    }
+    return true;
   }
+
+  console.error(
+    "Error creating Confluence space:",
+    createSpaceResponse?.status || "Unknown error"
+  );
+  return false;
 }
 
 /**

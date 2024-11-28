@@ -53,7 +53,7 @@ interface formattedSummaryObject {
   aiRemarks: string;
 }
 
-const getSettingsProperty = async (property: keyof Settings) => {
+export const getSettingsProperty = async (property: keyof Settings) => {
   const settings = await getSettings();
 
   if (!settings)
@@ -68,7 +68,7 @@ const getSettingsProperty = async (property: keyof Settings) => {
  * Generates the Authorization header using Basic Auth for JIRA API requests
  * @returns the base64 encoded authorization header
  */
-const getAuthHeader = async () => {
+export const getAuthHeader = async () => {
   const jiraAuthUserEmail = await getSettingsProperty("jiraAuthUserEmail");
   const jiraApiKey = await getSettingsProperty("jiraApiKey");
 

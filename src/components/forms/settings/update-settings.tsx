@@ -32,6 +32,7 @@ export default function UpdateSettings({
   currentSelectedUserIds,
   userList,
   confluenceSpaceName,
+  confluenceSpaceKey,
 }: {
   llamaApiUrl: string;
   llamaModel: string;
@@ -43,6 +44,7 @@ export default function UpdateSettings({
   currentSelectedUserIds: string;
   userList: { value: string; label: string }[];
   confluenceSpaceName: string;
+  confluenceSpaceKey: string;
 }) {
   // states
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
@@ -77,6 +79,7 @@ export default function UpdateSettings({
       preferredJIRAProject: currentSelectedProjectId,
       preferredUsers: currentSelectedUserIds,
       confluenceSpaceName: confluenceSpaceName,
+      confluenceSpaceKey: confluenceSpaceKey,
     },
     onSubmit: async (values) => {
       const { saveSettings } = await import(
@@ -92,6 +95,7 @@ export default function UpdateSettings({
         preferredJIRAProject,
         preferredUsers,
         confluenceSpaceName,
+        confluenceSpaceKey,
       } = values.value;
 
       const res = await saveSettings(
@@ -102,7 +106,8 @@ export default function UpdateSettings({
         jiraApiKey,
         preferredJIRAProject,
         preferredUsers,
-        confluenceSpaceName
+        confluenceSpaceName,
+        confluenceSpaceKey
       );
 
       if (res.status === 200) {
@@ -450,7 +455,8 @@ export default function UpdateSettings({
                   .min(
                     3,
                     "Confluence space name must have at least 3 characters"
-                  ),
+                  )
+                  .optional(),
               }}
               children={({ state, handleChange, handleBlur }) => (
                 <>
@@ -466,7 +472,47 @@ export default function UpdateSettings({
                     placeholder="space name"
                     onChange={(e) => handleChange(e.target.value)}
                     onBlur={handleBlur}
-                    required
+                    className="w-96"
+                  />
+                  <span
+                    className={`${
+                      state.meta.errors.length > 0 ? "visible" : "invisible"
+                    } text-xs text-pink-600 block`}
+                  >
+                    {state.meta.errors.length > 0
+                      ? state.meta.errors.join(", ")
+                      : "field error"}
+                  </span>
+                </>
+              )}
+            />
+          </FieldContainer>
+          <FieldContainer>
+            <Field
+              name="confluenceSpaceKey"
+              validators={{
+                onChange: z
+                  .string()
+                  .min(
+                    3,
+                    "Confluence space key must have at least 3 characters"
+                  )
+                  .optional(),
+              }}
+              children={({ state, handleChange, handleBlur }) => (
+                <>
+                  <Label
+                    htmlFor="confluenceSpaceKey"
+                    className="mb-3 block text-sm"
+                  >
+                    Confluence Space Key
+                  </Label>
+                  <Input
+                    id="confluenceSpaceKey"
+                    value={state.value}
+                    placeholder="space name"
+                    onChange={(e) => handleChange(e.target.value)}
+                    onBlur={handleBlur}
                     className="w-96"
                   />
                   <span

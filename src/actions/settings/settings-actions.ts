@@ -16,7 +16,8 @@ export const saveSettings = async (
   jiraApiKey: string,
   preferredProjectId: string,
   preferredUsersIds: string,
-  confluenceSpaceName: string
+  confluenceSpaceName: string,
+  confluenceSpaceKey: string
 ) => {
   return handleAction(async () => {
     if (!jiraOrgUrl || jiraOrgUrl.trim() === "") {
@@ -51,6 +52,7 @@ export const saveSettings = async (
             preferredProject: preferredProjectId,
             preferredUsers: preferredUsersIdsArray,
             confluenceSpaceName: confluenceSpaceName,
+            confluenceSpaceKey: confluenceSpaceKey,
           },
         })
       : await prisma.settings.create({
@@ -63,6 +65,7 @@ export const saveSettings = async (
             preferredProject: preferredProjectId,
             preferredUsers: preferredUsersIdsArray,
             confluenceSpaceName: confluenceSpaceName,
+            confluenceSpaceKey: confluenceSpaceKey,
           },
         });
 

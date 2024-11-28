@@ -18,6 +18,7 @@ export default async function Settings() {
     preferredProject,
     preferredUsers,
     confluenceSpaceName,
+    confluenceSpaceKey,
   } = settingsData
     ? settingsData
     : {
@@ -29,6 +30,7 @@ export default async function Settings() {
         preferredProject: "",
         preferredUsers: [],
         confluenceSpaceName: "",
+        confluenceSpaceKey: "",
       };
 
   let { data: projectListData } = await getAllJiraProjects();
@@ -56,6 +58,7 @@ export default async function Settings() {
           currentSelectedUserIds={preferredUsers.join(",")}
           userList={userListData}
           confluenceSpaceName={confluenceSpaceName}
+          confluenceSpaceKey={confluenceSpaceKey}
         />
       </PageContent>
     </div>
